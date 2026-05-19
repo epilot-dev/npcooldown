@@ -3,9 +3,21 @@ import * as path from 'path';
 import * as os from 'os';
 import ini from 'ini';
 import { createBackup, cleanupOldBackups } from '../backup.service.js';
-import type { CooldownConfig, WriteResult } from '../../types/index.js';
+import type { CooldownConfig, ReadResult, WriteResult } from '../../types/index.js';
 
 const NPMRC_PATH = path.join(os.homedir(), '.npmrc');
+
+export async function readNpmConfig(): Promise<ReadResult> {
+  try {
+    const content = await fs.readFile(NPMRC_PATH, 'utf-8');
+    const parsed = ini.parse(content);
+    const raw = parsed['min-release-age'];
+    const days = raw != null ? Number(raw) : undefined;
+    return { days: Number.isFinite(days) ? days : undefined, exclude: [] };
+  } catch {
+    return { exclude: [] };
+  }
+}
 
 export async function writeNpmConfig(config: CooldownConfig): Promise<WriteResult> {
   try {

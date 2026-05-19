@@ -5,10 +5,41 @@ import * as yaml from 'js-yaml';
 import ini from 'ini';
 import { createBackup, cleanupOldBackups } from '../backup.service.js';
 import { parseMajor } from '../detect.service.js';
-import type { CooldownConfig, WriteResult } from '../../types/index.js';
+import type { CooldownConfig, ReadResult, WriteResult } from '../../types/index.js';
 
 const PNPM_YAML_PATH = path.join(os.homedir(), '.config', 'pnpm', 'config.yaml');
 const NPMRC_PATH = path.join(os.homedir(), '.npmrc');
+
+export async function readPnpmConfig(): Promise<ReadResult> {
+  try {
+    const content = await fs.readFile(PNPM_YAML_PATH, 'utf-8');
+    const parsed = (yaml.load(content) as Record<string, any>) || {};
+    if (parsed.minimumReleaseAge != null) {
+      const minutes = Number(parsed.minimumReleaseAge);
+      const exclude = Array.isArray(parsed.minimumReleaseAgeExclude) ? parsed.minimumReleaseAgeExclude : [];
+      return {
+        days: Number.isFinite(minutes) ? Math.round(minutes / (24 * 60)) : undefined,
+        exclude
+      };
+    }
+  } catch {}
+
+  try {
+    const content = await fs.readFile(NPMRC_PATH, 'utf-8');
+    const parsed = ini.parse(content);
+    if (parsed['minimum-release-age'] != null) {
+      const minutes = Number(parsed['minimum-release-age']);
+      const raw = parsed['minimum-release-age-exclude'] ?? '';
+      const exclude = String(raw).split(',').map((s) => s.trim()).filter(Boolean);
+      return {
+        days: Number.isFinite(minutes) ? Math.round(minutes / (24 * 60)) : undefined,
+        exclude
+      };
+    }
+  } catch {}
+
+  return { exclude: [] };
+}
 
 export async function writePnpmConfig(params: {
   config: CooldownConfig;

@@ -69,6 +69,22 @@ The interactive CLI walks you through:
 
 Then it shows you a preview of what will change in each file, asks for confirmation, and writes.
 
+When you've run it before, existing values are read back from disk and presented as defaults — so re-running to tweak one setting doesn't make you re-type everything.
+
+### Non-interactive mode (share with your team)
+
+After a successful run, `npcooldown` prints a single copy-pasteable command that reproduces your exact config:
+
+```sh
+npx npcooldown --days 7 --exclude '@epilot/*' --exclude '@yourorg/*' --yes
+```
+
+Paste it into your team's onboarding docs or `package.json` setup script. Run with `--help` to see all flags:
+
+```sh
+npx npcooldown --help
+```
+
 ### Recommended Cooldown Duration
 
 | Duration | Tradeoff |

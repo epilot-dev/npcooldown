@@ -20,3 +20,8 @@ export interface WriteResult {
   success: boolean;
   error?: string;
 }
+
+export interface ReadResult {
+  days?: number;
+  exclude: string[];
+}

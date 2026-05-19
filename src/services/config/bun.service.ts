@@ -3,9 +3,25 @@ import * as path from 'path';
 import * as os from 'os';
 import { parse, stringify } from 'smol-toml';
 import { createBackup, cleanupOldBackups } from '../backup.service.js';
-import type { CooldownConfig, WriteResult } from '../../types/index.js';
+import type { CooldownConfig, ReadResult, WriteResult } from '../../types/index.js';
 
 const BUNFIG_PATH = path.join(os.homedir(), '.bunfig.toml');
+
+export async function readBunConfig(): Promise<ReadResult> {
+  try {
+    const content = await fs.readFile(BUNFIG_PATH, 'utf-8');
+    const parsed = parse(content) as Record<string, any>;
+    const install = (parsed.install as Record<string, any>) ?? {};
+    const seconds = install.minimumReleaseAge != null ? Number(install.minimumReleaseAge) : undefined;
+    const exclude = Array.isArray(install.minimumReleaseAgeExcludes) ? install.minimumReleaseAgeExcludes : [];
+    return {
+      days: Number.isFinite(seconds) ? Math.round(seconds! / 86400) : undefined,
+      exclude
+    };
+  } catch {
+    return { exclude: [] };
+  }
+}
 
 export async function writeBunConfig(config: CooldownConfig): Promise<WriteResult> {
   try {
