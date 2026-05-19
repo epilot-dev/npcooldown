@@ -6,10 +6,13 @@ import {
   promptCooldownDays,
   promptExcludePatterns,
   promptStrictSettings,
-  promptConfirmApply
+  promptConfirmApply,
+  promptUpdateManagers,
+  promptConfirmUpdate
 } from './utils/prompts.js';
 import { parseCliArgs, buildShareCommand, USAGE } from './utils/args.js';
 import { detectManagers, parseMajor } from './services/detect.service.js';
+import { detectInstallMethod, runUpdate } from './services/install-method.service.js';
 import { writeNpmConfig, readNpmConfig } from './services/config/npm.service.js';
 import { writePnpmConfig, readPnpmConfig } from './services/config/pnpm.service.js';
 import { writeYarnConfig, readYarnConfig } from './services/config/yarn.service.js';
@@ -75,15 +78,56 @@ async function main() {
   logger.newline();
 
   logger.info('Detecting installed package managers...');
-  const detected = await detectManagers();
+  let detected = await detectManagers();
 
-  const supported = detected.filter(isSupported);
-  const unsupported = detected.filter((m) => m.installed && !isSupported(m));
+  let supported = detected.filter(isSupported);
+  let unsupported = detected.filter((m) => m.installed && !isSupported(m));
   const missing = detected.filter((m) => !m.installed);
 
   for (const m of supported) logger.success(`${m.name} v${m.version}`);
-  for (const m of unsupported) logger.warning(`${m.name} v${m.version} — version too old for minimumReleaseAge support, skipping`);
+  for (const m of unsupported) logger.warning(`${m.name} v${m.version} — too old for minimumReleaseAge support`);
   for (const m of missing) logger.gray(`${m.name} not installed, skipping`);
+
+  if (unsupported.length > 0 && !args.yes) {
+    logger.newline();
+    logger.info('Checking how the outdated managers were installed...');
+    const updateInfos = await Promise.all(
+      unsupported.map(async (m) => ({ manager: m, info: await detectInstallMethod(m.name) }))
+    );
+
+    for (const { manager, info } of updateInfos) {
+      const via = info.method === 'unknown' ? 'unknown source' : `via ${info.method}`;
+      logger.gray(`${manager.name} (${via}) → ${info.updateCommand}`);
+    }
+
+    logger.newline();
+    const shouldUpdate = await promptUpdateManagers();
+    if (shouldUpdate) {
+      for (const { manager, info } of updateInfos) {
+        const confirmed = await promptConfirmUpdate({ manager: manager.name, command: info.updateCommand });
+        if (!confirmed) {
+          logger.gray(`Skipping ${manager.name}`);
+          continue;
+        }
+        logger.newline();
+        logger.info(`Running: ${info.updateCommand}`);
+        const ok = await runUpdate(info.updateCommand);
+        logger.newline();
+        if (!ok) logger.error(`Update failed for ${manager.name}`);
+      }
+
+      logger.newline();
+      logger.info('Re-detecting versions after updates...');
+      detected = await detectManagers();
+      supported = detected.filter(isSupported);
+      unsupported = detected.filter((m) => m.installed && !isSupported(m));
+
+      for (const m of supported) logger.success(`${m.name} v${m.version}`);
+      for (const m of unsupported) logger.warning(`${m.name} v${m.version} — still too old, will skip`);
+    }
+  } else if (unsupported.length > 0 && args.yes) {
+    logger.gray('(Skipping update prompt in --yes mode; outdated managers will be skipped)');
+  }
 
   if (supported.length === 0) {
     logger.newline();

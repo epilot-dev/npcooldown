@@ -93,3 +93,17 @@ export async function promptConfirmApply(): Promise<boolean> {
     default: true
   });
 }
+
+export async function promptUpdateManagers(): Promise<boolean> {
+  return await confirm({
+    message: 'Update them now?',
+    default: true
+  });
+}
+
+export async function promptConfirmUpdate(params: { manager: string; command: string }): Promise<boolean> {
+  return await confirm({
+    message: `Run "${params.command}" to update ${params.manager}?`,
+    default: true
+  });
+}
