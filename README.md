@@ -9,6 +9,73 @@
 npx npcooldown
 ```
 
+## Demo
+
+```text
+🧊 npcooldown — supply chain protection
+
+  Sets minimumReleaseAge across npm, pnpm, Yarn, and Bun
+
+→ Detecting installed package managers...
+✓ npm v11.12.1
+✓ yarn v4.14.1
+✓ bun v1.3.11
+⚠ pnpm v9.15.9 — too old for minimumReleaseAge support
+
+→ Checking how the outdated managers were installed...
+  pnpm (via volta) → volta install pnpm@latest
+
+? Update them now? yes
+? Run "volta install pnpm@latest" to update pnpm? yes
+
+→ Running: volta install pnpm@latest
+success: installed pnpm@11.1.0 with executables: pnpm, pnpx, pn, pnx
+
+→ Re-detecting versions after updates...
+✓ npm v11.12.1
+✓ pnpm v11.1.0
+✓ yarn v4.14.1
+✓ bun v1.3.11
+
+→ Reading existing cooldown settings...
+  Current cooldown across managers: 7d, 7d, 7d
+  Current excludes: @yourorg, @yourorg-internal
+
+? Cooldown duration (how old must a package version be before installing?): 7 days — CISA recommendation. Strongest protection.
+  Existing excludes: @yourorg, @yourorg-internal
+? Add another exclude — leave empty when done [2 total]:
+? Apply strict security settings? (strict mode + block missing timestamps + block exotic subdeps — recommended) yes
+
+Summary
+  Cooldown: 7 days
+  Exclude:  @yourorg, @yourorg-internal
+  Strict:   on
+  Block missing timestamps: on
+  Block exotic subdeps:     on (pnpm)
+
+Will write:
+  npm    → ~/.npmrc
+  pnpm   → ~/.config/pnpm/config.yaml
+  yarn   → ~/.yarnrc.yml
+  bun    → ~/.bunfig.toml
+
+? Apply these changes? yes
+
+→ Updating npm...
+  Backup: ~/.npmrc.backup.2026-05-19T08-27-10-973Z
+✓ npm → ~/.npmrc
+→ Updating pnpm...
+✓ pnpm → ~/.config/pnpm/config.yaml
+→ Updating yarn...
+  Backup: ~/.yarnrc.yml.backup.2026-05-19T08-27-10-979Z
+✓ yarn → ~/.yarnrc.yml
+→ Updating bun...
+  Backup: ~/.bunfig.toml.backup.2026-05-19T08-27-10-981Z
+✓ bun → ~/.bunfig.toml
+
+✓ All done! Protection active across 4 package managers.
+```
+
 ## The Problem
 
 2025-2026 has been a brutal year for the JavaScript supply chain:
