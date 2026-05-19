@@ -1,6 +1,6 @@
 {
   "name": "npcooldown",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Protect yourself from npm supply chain attacks. One command sets up minimumReleaseAge cooldowns across npm, pnpm, Yarn, and Bun globally.",
   "type": "module",
   "main": "dist/index.js",
